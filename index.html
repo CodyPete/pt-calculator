@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PT Pay Calculator — Bishopsgate 875</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button { opacity: 1; }
+    input[type=date]::-webkit-calendar-picker-indicator { filter: invert(0.5); cursor: pointer; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+  </style>
+</head>
+<body class="min-h-screen" style="background:#0d0d0d;color:#fff">
+
+  <!-- Header -->
+  <header style="border-bottom:1px solid rgba(255,255,255,0.08)" class="px-6 py-5">
+    <div class="max-w-5xl mx-auto flex items-center justify-between">
+      <div>
+        <h1 class="text-lg font-bold tracking-tight">PT Pay Calculator</h1>
+        <p style="color:rgba(255,255,255,0.3)" class="text-xs mt-0.5">Bishopsgate · Club 875 · All figures gross before tax &amp; NI</p>
+      </div>
+      <span style="background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.25);border:1px solid rgba(255,255,255,0.1)" class="text-xs px-3 py-1 rounded-full">Rates: Oct 2025</span>
+    </div>
+  </header>
+
+  <!-- Tabs -->
+  <div style="border-bottom:1px solid rgba(255,255,255,0.08)" class="px-6">
+    <div class="max-w-5xl mx-auto flex">
+      <button id="tab-pp" onclick="showTab('pp')"
+        style="border-bottom:2px solid #fbbf24;color:#fbbf24"
+        class="px-1 pt-3 pb-3 mr-6 text-sm font-medium">Pay Period</button>
+      <button id="tab-ramper" onclick="showTab('ramper')"
+        style="border-bottom:2px solid transparent;color:rgba(255,255,255,0.35)"
+        class="px-1 pt-3 pb-3 mr-6 text-sm font-medium hover:opacity-70 transition-opacity">Ramper / New Hire</button>
+    </div>
+  </div>
+
+  <main class="max-w-5xl mx-auto px-6 py-8">
+
+    <!-- ══════════════════════════════════════════ -->
+    <!--  TAB 1 — PAY PERIOD CALCULATOR            -->
+    <!-- ══════════════════════════════════════════ -->
+    <section id="view-pp">
+      <div class="grid md:grid-cols-2 gap-6">
+
+        <!-- Left: Inputs -->
+        <div class="space-y-4">
+
+          <!-- Role selector -->
+          <div class="rounded-xl p-5" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08)">
+            <p class="text-xs font-semibold tracking-widest uppercase mb-3" style="color:rgba(255,255,255,0.35)">Coach Level</p>
+            <div class="grid grid-cols-3 gap-2">
+              <button data-role="Coach"   onclick="setRole('pp','Coach')"   class="pp-role-btn py-2.5 rounded-lg text-sm font-semibold transition-all" style="background:#fbbf24;color:#000">Coach</button>
+              <button data-role="Coach+"  onclick="setRole('pp','Coach+')"  class="pp-role-btn py-2.5 rounded-lg text-sm font-semibold transition-all" style="background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.55)">Coach+</button>
+              <button data-role="Coach X" onclick="setRole('pp','Coach X')" class="pp-role-btn py-2.5 rounded-lg text-sm font-semibold transition-all" style="background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.55)">Coach X</button>
+            </div>
+          </div>
+
+          <!-- Sessions -->
+          <div class="rounded-xl p-5" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08)">
+            <div class="flex items-center justify-between mb-1">
+              <p class="text-xs font-semibold tracking-widest uppercase" style="color:rgba(255,255,255,0.35)">Sessions this Pay Period</p>
+              <span id="pp-tier-badge" class="text-xs font-bold px-2.5 py-1 rounded-lg" style="border:1px solid transparent"></span>
+            </div>
+            <p class="text-xs mb-3" style="color:rgba(255,255,255,0.22)">Bi-weekly paid sessions (used, no-show, late cancel)</p>
+            <input id="pp-sessions" type="number" min="0" max="200" value="45" oninput="calcPP()"
+              class="w-full rounded-xl px-4 py-3 text-3xl font-bold focus:outline-none transition-all"
+              style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.14);color:#fff">
+            <p id="pp-tier-hint" class="mt-2 text-xs" style="color:rgba(255,255,255,0.35)"></p>
+          </div>
+
+          <!-- Other activity -->
+          <div class="rounded-xl p-5" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08)">
+            <p class="text-xs font-semibold tracking-widest uppercase mb-4" style="color:rgba(255,255,255,0.35)">Additional Activity</p>
+            <div class="grid grid-cols-2 gap-3">
+              <label class="block">
+                <span class="text-xs mb-1 block" style="color:rgba(255,255,255,0.45)">Floor Shift Hours</span>
+                <div class="relative">
+                  <input id="pp-floor" type="number" min="0" step="0.5" value="0" oninput="calcPP()"
+                    class="w-full rounded-lg px-3 py-2.5 text-sm focus:outline-none transition-all pr-8"
+                    style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.14);color:#fff">
+                  <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs" style="color:rgba(255,255,255,0.25)">hrs</span>
+                </div>
+              </label>
+              <label class="block">
+                <span class="text-xs mb-1 block" style="color:rgba(255,255,255,0.45)">Meeting Hours <span style="color:rgba(255,255,255,0.2)">(PDM etc)</span></span>
+                <div class="relative">
+                  <input id="pp-meetings" type="number" min="0" step="0.5" value="0" oninput="calcPP()"
+                    class="w-full rounded-lg px-3 py-2.5 text-sm focus:outline-none transition-all pr-8"
+                    style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.14);color:#fff">
+                  <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs" style="color:rgba(255,255,255,0.25)">hrs</span>
+                </div>
+              </label>
+              <label class="block">
+                <span class="text-xs mb-1 block" style="color:rgba(255,255,255,0.45)">Equifits</span>
+                <input id="pp-eqf" type="number" min="0" value="0" oninput="calcPP()"
+                  class="w-full rounded-lg px-3 py-2.5 text-sm focus:outline-none transition-all"
+                  style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.14);color:#fff">
+              </label>
+              <label class="block">
+                <span class="text-xs mb-1 block" style="color:rgba(255,255,255,0.45)">CPTs <span style="color:rgba(255,255,255,0.2)">(Free PTs)</span></span>
+                <input id="pp-cpt" type="number" min="0" value="0" oninput="calcPP()"
+                  class="w-full rounded-lg px-3 py-2.5 text-sm focus:outline-none transition-all"
+                  style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.14);color:#fff">
+              </label>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right: Results -->
+        <div class="space-y-4">
+
+          <!-- Breakdown + totals -->
+          <div class="rounded-xl p-5" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08)">
+            <p class="text-xs font-semibold tracking-widest uppercase mb-4" style="color:rgba(255,255,255,0.35)">Earnings Breakdown</p>
+            <div class="space-y-2.5 text-sm">
+              <div class="flex justify-between">
+                <span id="pp-s-label" style="color:rgba(255,255,255,0.45)"></span>
+                <span id="pp-s-val" class="font-medium text-white"></span>
+              </div>
+              <div class="flex justify-between">
+                <span id="pp-f-label" style="color:rgba(255,255,255,0.45)"></span>
+                <span id="pp-f-val" class="font-medium text-white"></span>
+              </div>
+              <div class="flex justify-between">
+                <span id="pp-m-label" style="color:rgba(255,255,255,0.45)"></span>
+                <span id="pp-m-val" class="font-medium text-white"></span>
+              </div>
+              <div class="flex justify-between">
+                <span id="pp-e-label" style="color:rgba(255,255,255,0.45)"></span>
+                <span id="pp-e-val" class="font-medium text-white"></span>
+              </div>
+              <div class="flex justify-between">
+                <span id="pp-c-label" style="color:rgba(255,255,255,0.45)"></span>
+                <span id="pp-c-val" class="font-medium text-white"></span>
+              </div>
+            </div>
+            <div class="mt-4 pt-4" style="border-top:1px solid rgba(255,255,255,0.08)">
+              <div class="flex justify-between items-center">
+                <span class="text-sm" style="color:rgba(255,255,255,0.45)">Pay Period Total</span>
+                <span id="pp-total" class="text-3xl font-bold" style="color:#fbbf24"></span>
+              </div>
+              <div class="grid grid-cols-2 gap-3 mt-4">
+                <div class="rounded-xl p-3 text-center" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.07)">
+                  <p class="text-xs mb-1" style="color:rgba(255,255,255,0.28)">Monthly (× 2 PP)</p>
+                  <p id="pp-monthly" class="text-lg font-bold text-white"></p>
+                </div>
+                <div class="rounded-xl p-3 text-center" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.07)">
+                  <p class="text-xs mb-1" style="color:rgba(255,255,255,0.28)">Annual (× 26 PP)</p>
+                  <p id="pp-annual" class="text-lg font-bold text-white"></p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Next-tier nudge -->
+          <div id="pp-nudge" class="rounded-xl p-4 text-sm" style="background:rgba(251,191,36,0.06);border:1px solid rgba(251,191,36,0.2)"></div>
+
+          <!-- All tiers reference -->
+          <div class="rounded-xl p-5" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08)">
+            <p class="text-xs font-semibold tracking-widest uppercase mb-3" style="color:rgba(255,255,255,0.35)">All Tiers</p>
+            <div id="pp-tier-table" class="space-y-1.5"></div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!--  TAB 2 — RAMPER / NEW HIRE               -->
+    <!-- ══════════════════════════════════════════ -->
+    <section id="view-ramper" class="hidden">
+      <div class="grid md:grid-cols-2 gap-6">
+
+        <!-- Left: Inputs -->
+        <div class="space-y-4">
+
+          <!-- Role -->
+          <div class="rounded-xl p-5" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08)">
+            <p class="text-xs font-semibold tracking-widest uppercase mb-3" style="color:rgba(255,255,255,0.35)">Coach Level</p>
+            <div class="grid grid-cols-3 gap-2">
+              <button data-role="Coach"   onclick="setRole('r','Coach')"   class="r-role-btn py-2.5 rounded-lg text-sm font-semibold transition-all" style="background:#fbbf24;color:#000">Coach</button>
+              <button data-role="Coach+"  onclick="setRole('r','Coach+')"  class="r-role-btn py-2.5 rounded-lg text-sm font-semibold transition-all" style="background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.55)">Coach+</button>
+              <button data-role="Coach X" onclick="setRole('r','Coach X')" class="r-role-btn py-2.5 rounded-lg text-sm font-semibold transition-all" style="background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.55)">Coach X</button>
+            </div>
+          </div>
+
+          <!-- Hire date -->
+          <div class="rounded-xl p-5" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08)">
+            <p class="text-xs font-semibold tracking-widest uppercase mb-1" style="color:rgba(255,255,255,0.35)">Hire Date</p>
+            <p class="text-xs mb-3" style="color:rgba(255,255,255,0.22)">Drives milestone dates and staff classification</p>
+            <input id="r-hire" type="date" oninput="paidSet.clear();calcRamper()"
+              class="w-full rounded-xl px-4 py-3 text-sm focus:outline-none transition-all"
+              style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.14);color:#fff">
+          </div>
+
+          <!-- Pay inputs -->
+          <div class="rounded-xl p-5" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08)">
+            <p class="text-xs font-semibold tracking-widest uppercase mb-4" style="color:rgba(255,255,255,0.35)">This Pay Period</p>
+            <div class="grid grid-cols-2 gap-3">
+              <label>
+                <span class="text-xs mb-1 block" style="color:rgba(255,255,255,0.45)">Sessions</span>
+                <input id="r-sessions" type="number" min="0" value="20" oninput="calcRamper()"
+                  class="w-full rounded-lg px-3 py-2.5 text-sm focus:outline-none transition-all"
+                  style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.14);color:#fff">
+              </label>
+              <label>
+                <span class="text-xs mb-1 block" style="color:rgba(255,255,255,0.45)">Floor Shift Hours</span>
+                <input id="r-floor" type="number" min="0" step="0.5" value="8" oninput="calcRamper()"
+                  class="w-full rounded-lg px-3 py-2.5 text-sm focus:outline-none transition-all"
+                  style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.14);color:#fff">
+              </label>
+              <label>
+                <span class="text-xs mb-1 block" style="color:rgba(255,255,255,0.45)">Meeting Hours</span>
+                <input id="r-meetings" type="number" min="0" step="0.5" value="1" oninput="calcRamper()"
+                  class="w-full rounded-lg px-3 py-2.5 text-sm focus:outline-none transition-all"
+                  style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.14);color:#fff">
+              </label>
+              <label>
+                <span class="text-xs mb-1 block" style="color:rgba(255,255,255,0.45)">Equifits</span>
+                <input id="r-eqf" type="number" min="0" value="5" oninput="calcRamper()"
+                  class="w-full rounded-lg px-3 py-2.5 text-sm focus:outline-none transition-all"
+                  style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.14);color:#fff">
+              </label>
+              <label>
+                <span class="text-xs mb-1 block" style="color:rgba(255,255,255,0.45)">CPTs</span>
+                <input id="r-cpt" type="number" min="0" value="2" oninput="calcRamper()"
+                  class="w-full rounded-lg px-3 py-2.5 text-sm focus:outline-none transition-all"
+                  style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.14);color:#fff">
+              </label>
+              <label>
+                <span class="text-xs mb-1 block" style="color:rgba(255,255,255,0.45)">Active Clients</span>
+                <input id="r-acs" type="number" min="0" value="4" oninput="calcRamper()"
+                  class="w-full rounded-lg px-3 py-2.5 text-sm focus:outline-none transition-all"
+                  style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.14);color:#fff">
+              </label>
+            </div>
+            <label class="block mt-3">
+              <span class="text-xs mb-1 block" style="color:rgba(255,255,255,0.45)">Equifits in last 90 days <span style="color:rgba(255,255,255,0.22)">(running total for probation)</span></span>
+              <div class="flex items-center gap-3">
+                <input id="r-eqf90" type="number" min="0" value="8" oninput="calcRamper()"
+                  class="flex-1 rounded-lg px-3 py-2.5 text-sm focus:outline-none transition-all"
+                  style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.14);color:#fff">
+                <span class="text-xs shrink-0" style="color:rgba(255,255,255,0.3)">/ 30 target</span>
+              </div>
+            </label>
+          </div>
+
+        </div>
+
+        <!-- Right: Results -->
+        <div class="space-y-4">
+
+          <!-- Status + pay breakdown -->
+          <div class="rounded-xl p-5" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08)">
+            <div class="flex items-center justify-between mb-1">
+              <p class="text-xs font-semibold tracking-widest uppercase" style="color:rgba(255,255,255,0.35)">Status</p>
+              <span id="r-status" class="text-xs font-bold px-3 py-1 rounded-full" style="background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.3)">—</span>
+            </div>
+            <p id="r-days" class="text-xs mb-5" style="color:rgba(255,255,255,0.3)"></p>
+
+            <div class="space-y-2.5 text-sm">
+              <div class="flex justify-between">
+                <span id="r-s-label" style="color:rgba(255,255,255,0.45)"></span>
+                <span id="r-s-val" class="font-medium text-white"></span>
+              </div>
+              <div class="flex justify-between">
+                <span id="r-f-label" style="color:rgba(255,255,255,0.45)"></span>
+                <span id="r-f-val" class="font-medium text-white"></span>
+              </div>
+              <div class="flex justify-between">
+                <span id="r-m-label" style="color:rgba(255,255,255,0.45)"></span>
+                <span id="r-m-val" class="font-medium text-white"></span>
+              </div>
+              <div class="flex justify-between">
+                <span id="r-e-label" style="color:rgba(255,255,255,0.45)"></span>
+                <span id="r-e-val" class="font-medium text-white"></span>
+              </div>
+              <div class="flex justify-between">
+                <span id="r-c-label" style="color:rgba(255,255,255,0.45)"></span>
+                <span id="r-c-val" class="font-medium text-white"></span>
+              </div>
+            </div>
+            <div class="mt-4 pt-4" style="border-top:1px solid rgba(255,255,255,0.08)">
+              <div class="flex justify-between items-center">
+                <span class="text-sm" style="color:rgba(255,255,255,0.45)">Pay Period Total</span>
+                <span id="r-total" class="text-3xl font-bold" style="color:#fbbf24"></span>
+              </div>
+              <div class="grid grid-cols-2 gap-3 mt-4">
+                <div class="rounded-xl p-3 text-center" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.07)">
+                  <p class="text-xs mb-1" style="color:rgba(255,255,255,0.28)">Monthly (× 2 PP)</p>
+                  <p id="r-monthly" class="text-lg font-bold text-white"></p>
+                </div>
+                <div class="rounded-xl p-3 text-center" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.07)">
+                  <p class="text-xs mb-1" style="color:rgba(255,255,255,0.28)">Annual (× 26 PP)</p>
+                  <p id="r-annual" class="text-lg font-bold text-white"></p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ramper Bonus milestones -->
+          <div class="rounded-xl p-5" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08)">
+            <p class="text-xs font-semibold tracking-widest uppercase mb-4" style="color:rgba(255,255,255,0.35)">Ramper Bonus Milestones</p>
+            <div id="r-milestones" class="space-y-2.5"></div>
+            <div class="flex justify-between items-center mt-4 pt-3 text-sm" style="border-top:1px solid rgba(255,255,255,0.08)">
+              <span style="color:rgba(255,255,255,0.35)">Total potential bonus</span>
+              <span class="font-bold text-white">£975</span>
+            </div>
+          </div>
+
+          <!-- 30-in-90 EQF progress -->
+          <div class="rounded-xl p-5" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08)">
+            <div class="flex justify-between items-center mb-2">
+              <p class="text-xs font-semibold tracking-widest uppercase" style="color:rgba(255,255,255,0.35)">30 Equifits in 90 Days</p>
+              <span id="r-eqf-count" class="text-sm font-bold text-white"></span>
+            </div>
+            <div class="w-full rounded-full h-2 mb-2" style="background:rgba(255,255,255,0.1)">
+              <div id="r-eqf-bar" class="h-2 rounded-full transition-all" style="width:0%;background:#fbbf24"></div>
+            </div>
+            <p id="r-eqf-note" class="text-xs" style="color:rgba(255,255,255,0.32)"></p>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="px-6 py-5 mt-2" style="border-top:1px solid rgba(255,255,255,0.06)">
+    <p class="text-center text-xs" style="color:rgba(255,255,255,0.18)">
+      Pay rates effective Oct 19, 2025 · Bishopsgate Club 875 · All figures gross before tax &amp; NI · Pay is bi-weekly, 2 weeks in arrears
+    </p>
+  </footer>
+
+  <script>
+    // ── Rate data ─────────────────────────────────────────────────────────────
+    const RATES = {
+      'Coach':   [29.00, 33.00, 45.00, 48.00, 51.00, 54.00],
+      'Coach+':  [35.00, 39.00, 51.00, 55.00, 59.00, 62.00],
+      'Coach X': [48.50, 52.50, 61.50, 66.00, 65.42, 68.42],
+    };
+
+    // Colour-coded tiers: < 35 → red, 35–39 → orange, 40–44 → amber (big jump),
+    // 45–54 → green, 55–64 → emerald, 65+ → gold
+    const TIERS = [
+      { label: '< 35',  min: 0,  max: 34,       c: '#f87171', bg: 'rgba(248,113,113,0.1)',   b: 'rgba(248,113,113,0.3)' },
+      { label: '35–39', min: 35, max: 39,        c: '#fb923c', bg: 'rgba(251,146,60,0.1)',    b: 'rgba(251,146,60,0.3)'  },
+      { label: '40–44', min: 40, max: 44,        c: '#fbbf24', bg: 'rgba(251,191,36,0.1)',    b: 'rgba(251,191,36,0.35)' },
+      { label: '45–54', min: 45, max: 54,        c: '#4ade80', bg: 'rgba(74,222,128,0.1)',    b: 'rgba(74,222,128,0.3)'  },
+      { label: '55–64', min: 55, max: 64,        c: '#34d399', bg: 'rgba(52,211,153,0.1)',    b: 'rgba(52,211,153,0.3)'  },
+      { label: '65+',   min: 65, max: Infinity,  c: '#fde68a', bg: 'rgba(253,230,138,0.12)',  b: 'rgba(253,230,138,0.4)' },
+    ];
+
+    const FLOOR_RATE = 12.71;
+    const EQF_RATE   = 18.75;
+    const CPT_RATE   = 18.75;
+
+    const MILESTONES = [
+      { days: 60,  acs: 4,  bonus: 375, label: '60-day' },
+      { days: 90,  acs: 8,  bonus: 325, label: '90-day' },
+      { days: 120, acs: 12, bonus: 275, label: '120-day' },
+    ];
+
+    // ── State ─────────────────────────────────────────────────────────────────
+    let ppRole = 'Coach', rRole = 'Coach';
+    const paidSet = new Set(); // milestone indices manually marked as paid
+
+    // ── Tiny helpers ──────────────────────────────────────────────────────────
+    const gbp    = n => '£' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    const gbpInt = n => '£' + Math.round(n).toLocaleString('en-GB');
+    const v      = id => parseFloat(document.getElementById(id).value) || 0;
+    const el     = id => document.getElementById(id);
+
+    function tierIdx(sess) {
+      const i = TIERS.findIndex(t => sess >= t.min && (t.max === Infinity || sess <= t.max));
+      return i >= 0 ? i : 0;
+    }
+
+    function sessionRate(role, sess) {
+      return RATES[role][tierIdx(Math.max(0, sess))];
+    }
+
+    // ── Tab switching ─────────────────────────────────────────────────────────
+    function showTab(tab) {
+      el('view-pp').classList.toggle('hidden', tab !== 'pp');
+      el('view-ramper').classList.toggle('hidden', tab !== 'ramper');
+      const activeStyle  = 'border-bottom:2px solid #fbbf24;color:#fbbf24';
+      const inactiveStyle = 'border-bottom:2px solid transparent;color:rgba(255,255,255,0.35)';
+      el('tab-pp').style.cssText     = (tab === 'pp'     ? activeStyle : inactiveStyle) + ';padding:12px 4px;margin-right:24px;font-size:14px;font-weight:500';
+      el('tab-ramper').style.cssText = (tab === 'ramper' ? activeStyle : inactiveStyle) + ';padding:12px 4px;margin-right:24px;font-size:14px;font-weight:500';
+    }
+
+    // ── Role buttons ──────────────────────────────────────────────────────────
+    function setRole(prefix, role) {
+      if (prefix === 'pp') ppRole = role; else rRole = role;
+      document.querySelectorAll('.' + prefix + '-role-btn').forEach(btn => {
+        const on = btn.dataset.role === role;
+        btn.style.background = on ? '#fbbf24' : 'rgba(255,255,255,0.1)';
+        btn.style.color      = on ? '#000'     : 'rgba(255,255,255,0.55)';
+      });
+      prefix === 'pp' ? calcPP() : calcRamper();
+    }
+
+    // ── Pay Period Calculator ─────────────────────────────────────────────────
+    function calcPP() {
+      const sess  = v('pp-sessions');
+      const floor = v('pp-floor');
+      const meet  = v('pp-meetings');
+      const eqfs  = v('pp-eqf');
+      const cpts  = v('pp-cpt');
+
+      const ti    = tierIdx(sess);
+      const tier  = TIERS[ti];
+      const r     = RATES[ppRole][ti];
+
+      const sPay  = sess  * r;
+      const fPay  = floor * FLOOR_RATE;
+      const mPay  = meet  * FLOOR_RATE;
+      const ePay  = eqfs  * EQF_RATE;
+      const cPay  = cpts  * CPT_RATE;
+      const total = sPay + fPay + mPay + ePay + cPay;
+
+      // Tier badge
+      const badge = el('pp-tier-badge');
+      badge.textContent         = tier.label + ' sessions';
+      badge.style.color         = tier.c;
+      badge.style.background    = tier.bg;
+      badge.style.borderColor   = tier.b;
+
+      // Tier hint
+      const hint = el('pp-tier-hint');
+      if (ti < TIERS.length - 1) {
+        const nxt    = TIERS[ti + 1];
+        const nxtR   = RATES[ppRole][ti + 1];
+        const need   = nxt.min - sess;
+        const gain   = nxt.min * nxtR - sess * r;
+        hint.innerHTML = `<span style="color:${tier.c}">${need} more session${need !== 1 ? 's' : ''}</span> to <strong style="color:${nxt.c}">${nxt.label}</strong> (£${nxtR.toFixed(2)}/session) &nbsp;·&nbsp; <span style="color:#4ade80">+${gbp(gain)} this PP</span>`;
+      } else {
+        hint.innerHTML = `<span style="color:${tier.c}">Top tier — maximum rate unlocked</span>`;
+      }
+
+      // Line items
+      el('pp-s-label').textContent = `Sessions (${sess} × £${r.toFixed(2)})`;
+      el('pp-s-val').textContent   = gbp(sPay);
+      el('pp-f-label').textContent = `Floor shifts (${floor}h × £${FLOOR_RATE})`;
+      el('pp-f-val').textContent   = gbp(fPay);
+      el('pp-m-label').textContent = `Meetings (${meet}h × £${FLOOR_RATE})`;
+      el('pp-m-val').textContent   = gbp(mPay);
+      el('pp-e-label').textContent = `Equifits (${eqfs} × £${EQF_RATE})`;
+      el('pp-e-val').textContent   = gbp(ePay);
+      el('pp-c-label').textContent = `CPTs (${cpts} × £${CPT_RATE})`;
+      el('pp-c-val').textContent   = gbp(cPay);
+
+      el('pp-total').textContent   = gbp(total);
+      el('pp-monthly').textContent = gbp(total * 2);
+      el('pp-annual').textContent  = gbpInt(total * 26);
+
+      // Next-tier nudge
+      const nudge = el('pp-nudge');
+      if (ti < TIERS.length - 1) {
+        const nxt  = TIERS[ti + 1];
+        const nxtR = RATES[ppRole][ti + 1];
+        const need = nxt.min - sess;
+        const gain = nxt.min * nxtR - sess * r;
+        nudge.style.display = '';
+        nudge.innerHTML = `
+          <p class="text-xs font-semibold tracking-widest uppercase mb-2.5" style="color:#fbbf24">
+            Next tier: ${nxt.label} sessions
+          </p>
+          <p class="text-sm mb-3" style="color:rgba(255,255,255,0.65)">
+            ${need} more session${need !== 1 ? 's' : ''} → <strong class="text-white">£${nxtR.toFixed(2)}/session</strong>
+            ${ti === 0 && nxt.min === 40 ? ' <span style="color:rgba(255,255,255,0.35);font-size:11px">(biggest jump on the plan)</span>' : ''}
+          </p>
+          <div class="grid grid-cols-3 gap-2 text-center">
+            <div class="rounded-lg py-2 px-1" style="background:rgba(74,222,128,0.08)">
+              <p class="text-xs mb-1" style="color:rgba(255,255,255,0.3)">This PP</p>
+              <p class="text-sm font-bold" style="color:#4ade80">+${gbp(gain)}</p>
+            </div>
+            <div class="rounded-lg py-2 px-1" style="background:rgba(74,222,128,0.08)">
+              <p class="text-xs mb-1" style="color:rgba(255,255,255,0.3)">Monthly</p>
+              <p class="text-sm font-bold" style="color:#4ade80">+${gbp(gain * 2)}</p>
+            </div>
+            <div class="rounded-lg py-2 px-1" style="background:rgba(74,222,128,0.08)">
+              <p class="text-xs mb-1" style="color:rgba(255,255,255,0.3)">Annual</p>
+              <p class="text-sm font-bold" style="color:#4ade80">+${gbpInt(gain * 26)}</p>
+            </div>
+          </div>`;
+      } else {
+        nudge.style.display = 'none';
+      }
+
+      // Tier comparison table
+      el('pp-tier-table').innerHTML = TIERS.map((t, i) => {
+        const tR     = RATES[ppRole][i];
+        const active = i === ti;
+        return `
+          <div class="flex items-center justify-between rounded-lg px-3 py-2.5 text-sm"
+            style="${active ? `background:${t.bg};border:1px solid ${t.b}` : 'border:1px solid transparent'}">
+            <span style="color:${active ? '#fff' : 'rgba(255,255,255,0.38)'}; font-weight:${active ? '600' : '400'}">${t.label} sessions</span>
+            <span style="color:${t.c};font-weight:500">£${tR.toFixed(2)}<span style="color:${active ? t.c : 'rgba(255,255,255,0.2)'};font-weight:400;font-size:11px">/session</span></span>
+            <span style="color:${t.c};font-size:11px;font-weight:700;min-width:40px;text-align:right">${active ? '← you' : ''}</span>
+          </div>`;
+      }).join('');
+    }
+
+    // ── Ramper / New Hire Calculator ──────────────────────────────────────────
+    function calcRamper() {
+      const hireDateStr = el('r-hire').value;
+      const sess  = v('r-sessions');
+      const floor = v('r-floor');
+      const meet  = v('r-meetings');
+      const eqfs  = v('r-eqf');
+      const cpts  = v('r-cpt');
+      const acs   = v('r-acs');
+      const eqf90 = v('r-eqf90');
+
+      // Pay calculation
+      const r     = sessionRate(rRole, sess);
+      const sPay  = sess  * r;
+      const fPay  = floor * FLOOR_RATE;
+      const mPay  = meet  * FLOOR_RATE;
+      const ePay  = eqfs  * EQF_RATE;
+      const cPay  = cpts  * CPT_RATE;
+      const total = sPay + fPay + mPay + ePay + cPay;
+
+      el('r-s-label').textContent = `Sessions (${sess} × £${r.toFixed(2)})`;
+      el('r-s-val').textContent   = gbp(sPay);
+      el('r-f-label').textContent = `Floor shifts (${floor}h × £${FLOOR_RATE})`;
+      el('r-f-val').textContent   = gbp(fPay);
+      el('r-m-label').textContent = `Meetings (${meet}h × £${FLOOR_RATE})`;
+      el('r-m-val').textContent   = gbp(mPay);
+      el('r-e-label').textContent = `Equifits (${eqfs} × £${EQF_RATE})`;
+      el('r-e-val').textContent   = gbp(ePay);
+      el('r-c-label').textContent = `CPTs (${cpts} × £${CPT_RATE})`;
+      el('r-c-val').textContent   = gbp(cPay);
+      el('r-total').textContent   = gbp(total);
+      el('r-monthly').textContent = gbp(total * 2);
+      el('r-annual').textContent  = gbpInt(total * 26);
+
+      // 30-in-90 Equifit progress
+      const pct = Math.min(100, (eqf90 / 30) * 100);
+      el('r-eqf-count').textContent = eqf90 + ' / 30';
+      el('r-eqf-bar').style.width   = pct.toFixed(1) + '%';
+      el('r-eqf-bar').style.background = eqf90 >= 30 ? '#4ade80' : '#fbbf24';
+      if (eqf90 >= 30) {
+        el('r-eqf-note').textContent       = '✓ Probation Equifit target met';
+        el('r-eqf-note').style.color       = '#4ade80';
+      } else {
+        el('r-eqf-note').textContent       = (30 - eqf90) + ' more Equifits needed within 90 days of hire';
+        el('r-eqf-note').style.color       = 'rgba(255,255,255,0.32)';
+      }
+
+      // Require hire date for milestone section
+      if (!hireDateStr) {
+        el('r-status').textContent     = 'Enter hire date';
+        el('r-status').style.cssText   = 'background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.3);padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700';
+        el('r-days').textContent       = '';
+        el('r-milestones').innerHTML   = '<p class="text-sm" style="color:rgba(255,255,255,0.28)">Enter hire date above to see milestone tracking.</p>';
+        return;
+      }
+
+      const hire  = new Date(hireDateStr + 'T00:00:00');
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const days  = Math.floor((today - hire) / 86400000);
+
+      // Days info line
+      const hireFmt = hire.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+      if (days >= 0) {
+        el('r-days').textContent = `Hired ${hireFmt} · ${days} day${days !== 1 ? 's' : ''} ago`;
+      } else {
+        el('r-days').textContent = `Starting ${hireFmt} · in ${Math.abs(days)} day${Math.abs(days) !== 1 ? 's' : ''}`;
+      }
+
+      // Status classification
+      let sText, sBg, sColor;
+      if (days < 0) {
+        sText = 'Future hire'; sBg = 'rgba(148,163,184,0.15)'; sColor = '#94a3b8';
+      } else if (days < 60) {
+        sText = 'New Hire'; sBg = 'rgba(59,130,246,0.15)'; sColor = '#93c5fd';
+      } else if (days < 180) {
+        const isRambo = (days >= 60 && acs >= 4);
+        sText = isRambo ? 'RAMBO' : 'Ramper';
+        sBg   = isRambo ? 'rgba(234,179,8,0.15)'  : 'rgba(168,85,247,0.15)';
+        sColor= isRambo ? '#fde047' : '#d8b4fe';
+      } else {
+        const monthlyEst = sess * 2;
+        const isFTE = monthlyEst >= 90;
+        sText = isFTE ? 'FTE' : 'Underperformer';
+        sBg   = isFTE ? 'rgba(74,222,128,0.15)' : 'rgba(248,113,113,0.15)';
+        sColor= isFTE ? '#4ade80' : '#f87171';
+      }
+      el('r-status').textContent = sText;
+      el('r-status').style.cssText = `background:${sBg};color:${sColor};padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;border:1px solid ${sColor}35`;
+
+      // Milestone cards
+      el('r-milestones').innerHTML = MILESTONES.map((m, idx) => {
+        const dueDate  = new Date(hire.getTime() + m.days * 86400000);
+        const dueFmt   = dueDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        const daysLeft = Math.ceil((dueDate - today) / 86400000);
+        const reached  = days >= m.days;
+        const qualifies = acs >= m.acs;
+        const paid     = paidSet.has(idx);
+
+        let col, bgCard, icon, tag, subNote;
+        if (paid) {
+          col = '#64748b'; bgCard = 'rgba(100,116,139,0.1)'; icon = '£'; tag = 'Paid ✓';
+          subNote = `£${m.bonus} bonus paid · Click to unmark`;
+        } else if (reached && qualifies) {
+          col = '#4ade80'; bgCard = 'rgba(74,222,128,0.07)'; icon = '✓'; tag = 'Qualified';
+          subNote = `${m.acs} ACs on 3-pack+ · Due ${dueFmt} · Click to mark as paid`;
+        } else if (reached && !qualifies) {
+          col = '#f87171'; bgCard = 'rgba(248,113,113,0.07)'; icon = '✗'; tag = 'Missed';
+          subNote = `${m.acs} ACs required — only ${acs} at milestone date`;
+        } else {
+          col = '#fbbf24'; bgCard = 'rgba(255,255,255,0.04)'; icon = '○';
+          tag = daysLeft > 0 ? daysLeft + 'd left' : 'Due today';
+          const acShortfall = Math.max(0, m.acs - acs);
+          subNote = `${m.acs} ACs on 3-pack+ · Due ${dueFmt}` +
+            (acShortfall > 0 ? ` · <span style="color:#fbbf24">${acShortfall} more AC${acShortfall !== 1 ? 's' : ''} needed</span>` : '');
+        }
+
+        const clickable = paid || (reached && qualifies);
+        return `
+          <div onclick="${clickable ? 'togglePaid(' + idx + ')' : ''}"
+            class="flex items-center gap-3 rounded-xl p-3.5 transition-opacity"
+            style="background:${bgCard};border:1px solid ${col}28;cursor:${clickable ? 'pointer' : 'default'};${clickable ? 'user-select:none' : ''}">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
+              style="background:${col}20;color:${col}">${icon}</div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-sm font-semibold" style="color:${paid ? 'rgba(255,255,255,0.45)' : '#fff'}">${m.label}</span>
+                <span class="text-xs font-bold" style="color:${col}">${tag}</span>
+              </div>
+              <p class="text-xs mt-0.5" style="color:rgba(255,255,255,0.32)">${subNote}</p>
+            </div>
+            <div class="text-right shrink-0">
+              <p class="text-sm font-bold" style="color:${paid ? 'rgba(255,255,255,0.35)' : '#fff'}">${paid ? '—' : '£' + m.bonus}</p>
+              <p class="text-xs" style="color:rgba(255,255,255,0.28)">${paid ? 'paid' : 'bonus'}</p>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    // ── Paid milestone toggle ─────────────────────────────────────────────────
+    function togglePaid(idx) {
+      paidSet.has(idx) ? paidSet.delete(idx) : paidSet.add(idx);
+      calcRamper();
+    }
+
+    // ── Init ──────────────────────────────────────────────────────────────────
+    // Default hire date: 45 days ago — puts the ramper in first milestone window
+    const initDate = new Date();
+    initDate.setDate(initDate.getDate() - 45);
+    el('r-hire').value = initDate.toISOString().split('T')[0];
+
+    calcPP();
+    calcRamper();
+  </script>
+
+</body>
+</html>
