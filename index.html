@@ -46,6 +46,7 @@
     <div class="max-w-5xl mx-auto flex">
       <button id="tab-pp" onclick="showTab('pp')" class="tab-btn" style="border-bottom:2px solid #fff;color:#fff">Pay Period</button>
       <button id="tab-ramper" onclick="showTab('ramper')" class="tab-btn" style="color:#777">Ramper / New Hire</button>
+      <button id="tab-coverage" onclick="showTab('coverage')" class="tab-btn" style="color:#777">Client Coverage</button>
     </div>
   </div>
 
@@ -327,11 +328,100 @@
       </div>
     </section>
 
+    <!-- ══════════════════════════════════════════ -->
+    <!--  TAB 3 — CLIENT COVERAGE                  -->
+    <!-- ══════════════════════════════════════════ -->
+    <section id="view-coverage" class="hidden">
+      <div class="grid md:grid-cols-2 gap-5">
+
+        <!-- Left: Inputs -->
+        <div class="space-y-4">
+
+          <!-- Role selector -->
+          <div class="card p-5">
+            <p class="label mb-3">Coach Level</p>
+            <div class="grid grid-cols-3 gap-2">
+              <button data-role="Coach"   onclick="setRole('cov','Coach')"   class="cov-role-btn role-btn role-btn-active">Coach</button>
+              <button data-role="Coach+"  onclick="setRole('cov','Coach+')"  class="cov-role-btn role-btn role-btn-inactive">Coach+</button>
+              <button data-role="Coach X" onclick="setRole('cov','Coach X')" class="cov-role-btn role-btn role-btn-inactive">Coach X</button>
+            </div>
+          </div>
+
+          <!-- Sessions worked -->
+          <div class="card p-5">
+            <p class="label mb-1">Your Sessions This Pay Period</p>
+            <p style="color:#777;font-size:11px;margin-bottom:12px">Sessions you personally delivered (excludes covered sessions below)</p>
+            <input id="cov-sessions" type="number" min="0" max="200" value="30" oninput="calcCoverage()"
+              class="input-field px-4 py-3 text-3xl font-bold"
+              style="letter-spacing:-0.02em">
+          </div>
+
+          <!-- Covered sessions -->
+          <div class="card p-5">
+            <p class="label mb-1">Client Sessions Covered By Others</p>
+            <p style="color:#777;font-size:11px;margin-bottom:12px">Sessions a colleague delivered for your clients while you were away on PTO</p>
+            <input id="cov-covered" type="number" min="0" max="200" value="6" oninput="calcCoverage()"
+              class="input-field px-4 py-3 text-3xl font-bold"
+              style="letter-spacing:-0.02em">
+          </div>
+
+          <!-- Confirmed toggle -->
+          <div class="card p-5">
+            <div class="flex items-center justify-between">
+              <div>
+                <p style="color:#fff;font-size:13px;font-weight:600">Confirmed by PTM</p>
+                <p style="color:#777;font-size:11px;margin-top:3px;max-width:220px">Coverage only pays out once the PTM confirms the sessions took place</p>
+              </div>
+              <button id="cov-confirmed-btn" onclick="toggleConfirmed()" class="role-btn role-btn-active" style="padding:8px 20px">Yes</button>
+            </div>
+          </div>
+
+          <div class="p-4 text-sm" style="border:1px solid #333;border-radius:2px;background:#0d0d0d">
+            <p style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:6px">Guideline</p>
+            <p style="color:#999;font-size:12px;line-height:1.5">Client Coverage Incentive, effective Sept 2022. Flat rate confirmed current Jul 2026. Choose whichever option below pays more.</p>
+          </div>
+
+        </div>
+
+        <!-- Right: Results -->
+        <div class="space-y-4">
+
+          <!-- Option A -->
+          <div class="card p-5">
+            <p class="label mb-1">Option A — Flat Rate</p>
+            <p style="color:#777;font-size:11px;margin-bottom:14px">£7.00 per confirmed covered session, on top of your normal session pay</p>
+            <div id="cov-a-breakdown" class="space-y-2.5 text-sm"></div>
+            <hr class="divider my-4">
+            <div class="flex justify-between items-baseline">
+              <span style="font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#888">Total</span>
+              <span id="cov-a-total" style="font-size:1.75rem;font-weight:800;letter-spacing:-0.02em;color:#fff"></span>
+            </div>
+          </div>
+
+          <!-- Option B -->
+          <div class="card p-5">
+            <p class="label mb-1">Option B — Counts Towards Threshold</p>
+            <p style="color:#777;font-size:11px;margin-bottom:14px">Covered sessions push your combined count towards the next tier; you're paid that tier's rate on the sessions you actually delivered</p>
+            <div id="cov-b-breakdown" class="space-y-2.5 text-sm"></div>
+            <hr class="divider my-4">
+            <div class="flex justify-between items-baseline">
+              <span style="font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#888">Total</span>
+              <span id="cov-b-total" style="font-size:1.75rem;font-weight:800;letter-spacing:-0.02em;color:#fff"></span>
+            </div>
+          </div>
+
+          <!-- Recommendation -->
+          <div id="cov-recommend" class="p-4 text-sm" style="border:1px solid #333;border-radius:2px;background:#0d0d0d"></div>
+
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <footer class="px-6 py-5 mt-2" style="border-top:1px solid #111">
     <p class="text-center" style="font-size:10px;color:#555;letter-spacing:0.08em;text-transform:uppercase">
-      Pay rates effective Oct 19, 2025 · Bishopsgate Club 875 · All figures gross before tax &amp; NI · Pay is bi-weekly, 2 weeks in arrears
+      Pay rates effective Oct 19, 2025 · Client Coverage flat rate £7.00 effective Sept 2022, confirmed current Jul 2026 · Bishopsgate Club 875 · All figures gross before tax &amp; NI · Pay is bi-weekly, 2 weeks in arrears
     </p>
   </footer>
 
@@ -352,9 +442,10 @@
       { label: '65+',   min: 65, max: Infinity,  c: '#fff',    bg: 'rgba(255,255,255,0.10)', b: 'rgba(255,255,255,0.50)' },
     ];
 
-    const FLOOR_RATE = 12.71;
-    const EQF_RATE   = 18.75;
-    const CPT_RATE   = 18.75;
+    const FLOOR_RATE    = 12.71;
+    const EQF_RATE      = 18.75;
+    const CPT_RATE      = 18.75;
+    const COVERAGE_RATE = 7.00; // Client Coverage Incentive, flat rate per confirmed covered session (effective Sept 2022, confirmed current Jul 2026)
 
     const MILESTONES = [
       { days: 60,  acs: 4,  bonus: 375, label: '60-day' },
@@ -363,7 +454,8 @@
     ];
 
     // ── State ─────────────────────────────────────────────────────────────────
-    let ppRole = 'Coach', rRole = 'Coach';
+    let ppRole = 'Coach', rRole = 'Coach', covRole = 'Coach';
+    let covConfirmed = true;
     const paidSet = new Set();
 
     // ── Tiny helpers ──────────────────────────────────────────────────────────
@@ -385,19 +477,25 @@
     function showTab(tab) {
       el('view-pp').classList.toggle('hidden', tab !== 'pp');
       el('view-ramper').classList.toggle('hidden', tab !== 'ramper');
-      el('tab-pp').style.cssText     = (tab === 'pp'     ? 'border-bottom:2px solid #fff;color:#fff'     : 'border-bottom:2px solid transparent;color:#777') + ';padding:12px 0;margin-right:28px;font-size:13px;font-weight:500;letter-spacing:0.04em;cursor:pointer;background:none;border-left:none;border-right:none;border-top:none;transition:all 0.15s';
-      el('tab-ramper').style.cssText = (tab === 'ramper' ? 'border-bottom:2px solid #fff;color:#fff' : 'border-bottom:2px solid transparent;color:#777') + ';padding:12px 0;margin-right:28px;font-size:13px;font-weight:500;letter-spacing:0.04em;cursor:pointer;background:none;border-left:none;border-right:none;border-top:none;transition:all 0.15s';
+      el('view-coverage').classList.toggle('hidden', tab !== 'coverage');
+      ['pp', 'ramper', 'coverage'].forEach(t => {
+        el('tab-' + t).style.cssText = (tab === t ? 'border-bottom:2px solid #fff;color:#fff' : 'border-bottom:2px solid transparent;color:#777') + ';padding:12px 0;margin-right:28px;font-size:13px;font-weight:500;letter-spacing:0.04em;cursor:pointer;background:none;border-left:none;border-right:none;border-top:none;transition:all 0.15s';
+      });
     }
 
     // ── Role buttons ──────────────────────────────────────────────────────────
     function setRole(prefix, role) {
-      if (prefix === 'pp') ppRole = role; else rRole = role;
+      if (prefix === 'pp') ppRole = role;
+      else if (prefix === 'r') rRole = role;
+      else if (prefix === 'cov') covRole = role;
       document.querySelectorAll('.' + prefix + '-role-btn').forEach(btn => {
         const on = btn.dataset.role === role;
         btn.classList.toggle('role-btn-active', on);
         btn.classList.toggle('role-btn-inactive', !on);
       });
-      prefix === 'pp' ? calcPP() : calcRamper();
+      if (prefix === 'pp') calcPP();
+      else if (prefix === 'r') calcRamper();
+      else if (prefix === 'cov') calcCoverage();
     }
 
     // ── Pay Period Calculator ─────────────────────────────────────────────────
@@ -643,6 +741,68 @@
       calcRamper();
     }
 
+    // ── Client Coverage Calculator ────────────────────────────────────────────
+    function toggleConfirmed() {
+      covConfirmed = !covConfirmed;
+      const btn = el('cov-confirmed-btn');
+      btn.textContent = covConfirmed ? 'Yes' : 'No';
+      btn.classList.toggle('role-btn-active', covConfirmed);
+      btn.classList.toggle('role-btn-inactive', !covConfirmed);
+      calcCoverage();
+    }
+
+    function calcCoverage() {
+      const sess    = v('cov-sessions');
+      const covered = v('cov-covered');
+      const effCovered = covConfirmed ? covered : 0;
+
+      // Base rate is always determined by sessions actually worked (no coverage applied)
+      const baseRate = sessionRate(covRole, sess);
+      const basePay  = sess * baseRate;
+
+      // Option A — flat £7 per confirmed covered session, on top of base pay
+      const coverageFlat = effCovered * COVERAGE_RATE;
+      const totalA = basePay + coverageFlat;
+
+      // Option B — combined count (worked + covered) determines the tier;
+      // paid only on sessions actually worked, at that tier's rate
+      const combined     = sess + effCovered;
+      const boostedRate  = sessionRate(covRole, combined);
+      const totalB        = sess * boostedRate;
+      const tierBoosted    = boostedRate > baseRate;
+
+      // Option A breakdown
+      el('cov-a-breakdown').innerHTML = `
+        <div class="flex justify-between"><span style="color:#999">Sessions worked (${sess} × £${baseRate.toFixed(2)})</span><span class="font-medium text-white">${gbp(basePay)}</span></div>
+        <div class="flex justify-between"><span style="color:#999">Covered (${covered} × £${COVERAGE_RATE.toFixed(2)})${covConfirmed ? '' : ' <span style=\"color:#666\">— unconfirmed, £0</span>'}</span><span class="font-medium text-white">${gbp(coverageFlat)}</span></div>
+      `;
+      el('cov-a-total').textContent = gbp(totalA);
+
+      // Option B breakdown
+      el('cov-b-breakdown').innerHTML = `
+        <div class="flex justify-between"><span style="color:#999">Combined count (${sess} worked + ${effCovered} covered = ${combined})</span><span class="font-medium text-white">${TIERS[tierIdx(combined)].label} tier${tierBoosted ? '' : ' (no change)'}</span></div>
+        <div class="flex justify-between"><span style="color:#999">Paid on sessions worked (${sess} × £${boostedRate.toFixed(2)})</span><span class="font-medium text-white">${gbp(totalB)}</span></div>
+      `;
+      el('cov-b-total').textContent = gbp(totalB);
+
+      // Recommendation
+      const rec = el('cov-recommend');
+      if (covered === 0) {
+        rec.innerHTML = `<p style="color:#888">No covered sessions entered — nothing to compare yet.</p>`;
+      } else if (!covConfirmed) {
+        rec.innerHTML = `<p style="color:#888">Covered sessions are marked <strong style="color:#fff">unconfirmed</strong> — neither option pays out until your PTM confirms they took place.</p>`;
+      } else if (Math.abs(totalA - totalB) < 0.005) {
+        rec.innerHTML = `<p style="font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#fff;margin-bottom:6px">Either option</p><p style="color:#aaa">Both pay <strong class="text-white">${gbp(totalA)}</strong> — no difference this pay period.</p>`;
+      } else {
+        const aWins = totalA > totalB;
+        const better = aWins ? 'A — Flat Rate' : 'B — Threshold';
+        const diff = Math.abs(totalA - totalB);
+        rec.innerHTML = `
+          <p style="font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#fff;margin-bottom:6px">Recommended: Option ${better}</p>
+          <p style="color:#aaa">+${gbp(diff)} more than the other option this pay period.</p>`;
+      }
+    }
+
     // ── Init ──────────────────────────────────────────────────────────────────
     const initDate = new Date();
     initDate.setDate(initDate.getDate() - 45);
@@ -650,6 +810,7 @@
 
     calcPP();
     calcRamper();
+    calcCoverage();
   </script>
 
 </body>
